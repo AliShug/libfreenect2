@@ -5,14 +5,14 @@ struct Parameters
   float ab_multiplier;
   vec3 ab_multiplier_per_frq;
   float ab_output_multiplier;
-  
+
   vec3 phase_in_rad;
-  
+
   float joint_bilateral_ab_threshold;
   float joint_bilateral_max_edge;
   float joint_bilateral_exp;
   mat3 gaussian_kernel;
-  
+
   float phase_offset;
   float unambigious_dist;
   float individual_ab_threshold;
@@ -21,7 +21,7 @@ struct Parameters
   float ab_confidence_offset;
   float min_dealias_confidence;
   float max_dealias_confidence;
-  
+
   float edge_ab_avg_min_value;
   float edge_ab_std_dev_threshold;
   float edge_close_delta_threshold;
@@ -29,7 +29,7 @@ struct Parameters
   float edge_max_delta_threshold;
   float edge_avg_delta_threshold;
   float max_edge_count;
-  
+
   float min_depth;
   float max_depth;
 };
@@ -45,34 +45,34 @@ in VertexData {
     vec2 TexCoord;
 } FragmentIn;
 
-layout(location = 0) out vec4 Debug;
+//layout(location = 0) out vec4 Debug;
 layout(location = 1) out float Depth;
-layout(location = 2) out vec2 DepthAndIrSum;
+//layout(location = 2) out vec2 DepthAndIrSum;
 
 #define M_PI 3.1415926535897932384626433832795
 
 void main(void)
 {
   ivec2 uv = ivec2(FragmentIn.TexCoord.x, FragmentIn.TexCoord.y);
-      
+
   vec3 a = texelFetch(A, uv).xyz;
   vec3 b = texelFetch(B, uv).xyz;
-  
+
   vec3 phase = atan(b, a);
   phase = mix(phase, phase + 2.0 * M_PI, lessThan(phase, vec3(0.0)));
   phase = mix(phase, vec3(0.0), isnan(phase));
   vec3 ir = sqrt(a * a + b * b) * Params.ab_multiplier;
-  
+
   float ir_sum = ir.x + ir.y + ir.z;
   float ir_min = min(ir.x, min(ir.y, ir.z));
   float ir_max = max(ir.x, max(ir.y, ir.z));
-  
+
   float phase_final = 0;
-  
+
   if(ir_min >= Params.individual_ab_threshold && ir_sum >= Params.ab_threshold)
   {
     vec3 t = phase / (2.0 * M_PI) * vec3(3.0, 15.0, 2.0);
-  
+
     float t0 = t.x;
     float t1 = t.y;
     float t2 = t.z;
@@ -136,7 +136,7 @@ void main(void)
     t10 *= mask3;
     phase_final = true/*(modeMask & 2) != 0*/ ? t11 : t10;
   }
-  
+
   float zmultiplier = texelFetch(ZTable, uv).x;
   float xmultiplier = texelFetch(XTable, uv).x;
 
@@ -151,9 +151,9 @@ void main(void)
 
   float depth_fit = depth_linear / (-depth_linear * xmultiplier + 1);
   depth_fit = depth_fit < 0.0 ? 0.0 : depth_fit;
-  
+
   Depth = cond1 ? depth_fit : depth_linear; // r1.y -> later r2.z
-  DepthAndIrSum = vec2(Depth, ir_sum);
-  
-  Debug = vec4(vec3(Depth / Params.max_depth), 1.0);
+  //DepthAndIrSum = vec2(Depth, ir_sum);
+
+  //Debug = vec4(vec3(Depth / Params.max_depth), 1.0);
 }
